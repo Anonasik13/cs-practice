@@ -16,11 +16,11 @@ def parse_record(line: str) -> dict:
         raise ValueError("empty date")
 
     try:
-        temperature = float(temp_str)
+        temp = float(temp_str)
     except ValueError:
         raise ValueError("temperature is not a number")
 
-    return {"city": city.strip(), "temperature": temperature, "date": date.strip()}
+    return {"city": city.strip(), "temp": temp, "date": date.strip()}
 
 
 def read_valid(lines: list) -> list:
@@ -35,13 +35,15 @@ def read_valid(lines: list) -> list:
     return valid_records
 
 
+
+
 def average_by_city(records: list) -> dict:
     total = {}
     count = {}
     for rec in records:
         city = rec["city"]
-        temperature = rec["temperature"]
-        total[city] = total.get(city, 0.0) + temperature
+        temp = rec["temp"]
+        total[city] = total.get(city, 0.0) + temp
         count[city] = count.get(city, 0) + 1
     averages = {}
     for city in total:
@@ -58,3 +60,5 @@ def warmest_city(records: list) -> str:
         if best is None or averages[city] > averages[best]:
             best = city
     return best
+
+
