@@ -16,7 +16,7 @@ def parse_record(line: str) -> dict:
         raise ValueError("empty date")
 
     try:
-        temp = float(temp_str)
+        temp = float(temp_str.replace(",", "."))
     except ValueError:
         raise ValueError("temperature is not a number")
 
@@ -58,9 +58,3 @@ def warmest_city(records: list) -> str:
         if best is None or averages[city] > averages[best]:
             best = city
     return best
-
-
-
-
-
-
