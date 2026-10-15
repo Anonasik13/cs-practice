@@ -24,7 +24,7 @@ def parse_record(line: str) -> dict:
 
 
 def read_valid(lines: list) -> list:
-    valid_records = 
+    valid_records = []
     for line in lines:
         if not line.strip():
             continue
