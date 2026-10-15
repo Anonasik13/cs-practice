@@ -24,7 +24,7 @@ def parse_record(line: str) -> dict:
 
 
 def read_valid(lines: list) -> list:
-    valid_records = 
+    valid_records = [] # <-- ВОТ ЗДЕСЬ БЫЛА ОШИБКА, ТЕПЕРЬ ИСПРАВЛЕНО
     for line in lines:
         if not line.strip():
             continue
@@ -33,8 +33,6 @@ def read_valid(lines: list) -> list:
         except ValueError:
             continue
     return valid_records
-
-
 
 
 def average_by_city(records: list) -> dict:
@@ -60,5 +58,8 @@ def warmest_city(records: list) -> str:
         if best is None or averages[city] > averages[best]:
             best = city
     return best
+
+
+
 
 
