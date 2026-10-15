@@ -40,7 +40,7 @@ def average_by_city(records: list) -> dict:
     count = {}
     for rec in records:
         city = rec["city"]
-        temp = rec["temp"]
+        temp = rec["temperature"]
         total[city] = total.get(city, 0.0) + temp
         count[city] = count.get(city, 0) + 1
     averages = {}
