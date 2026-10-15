@@ -1,3 +1,4 @@
+# main.py
 import sys
 from stats import average_by_city, read_valid, warmest_city
 
@@ -22,4 +23,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-# 12312
