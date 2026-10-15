@@ -31,7 +31,7 @@ def read_valid(lines: list) -> list:
         try:
             valid_records.append(parse_record(line))
         except ValueError:
-            continue
+            continue # 5125
     return valid_records
 
 
