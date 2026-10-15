@@ -55,5 +55,6 @@ def warmest_city(records: list) -> str:
     averages = average_by_city(records)
     best = None
     for city in sorted(averages):
-        if best is None or
-
+        if best is None or averages[city] > averages[best]:
+            best = city
+    return best
