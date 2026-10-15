@@ -1,4 +1,3 @@
-# stats.py
 def parse_record(line: str) -> dict:
     if not line.strip():
         raise ValueError("empty line")
@@ -56,8 +55,5 @@ def warmest_city(records: list) -> str:
     averages = average_by_city(records)
     best = None
     for city in sorted(averages):
-        if best is None or averages[city] > averages[best]:
-            best = city
-    return best
-
+        if best is None or
 
