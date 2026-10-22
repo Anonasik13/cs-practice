@@ -1,109 +1,102 @@
+import re
+
 def parse_event(line: str) -> dict:
     """
-    Разбирает строку журнала вида:
-      2026-03-01T09:03:55 ERROR Не удалось открыть файл data.csv
-    Возвращает: {"time": ..., "level": ..., "message": ...}
-    Если строка невалидна — ValueError.
+    Разбирает строку журнала на составляющие: время, уровень, сообщение.
+    Возвращает словарь или возбуждает ValueError для негодных строк.
+    Сообщение делится не больше чем на три части через пробелы.
     """
+    if not isinstance(line, str):
+        raise ValueError("Строка должна быть типа str")
+    
     line = line.strip()
     if not line:
-        raise ValueError("Empty line")
+        raise ValueError("Пустая строка")
 
-    # Ищем первые два пробела: время (до первого), уровень (между первым и вторым), остальное — сообщение
-    first_space = line.find(" ")
-    if first_space == -1:
-        raise ValueError("No spaces")
-
-    second_space = line.find(" ", first_space + 1)
-    if second_space == -1 or second_space == len(line) - 1:
-        # Нет второго пробела или он в конце — значит, нет сообщения или уровня
-        raise ValueError("Missing level or message")
-
-    time_part = line[:first_space]
-    level_part = line[first_space + 1:second_space]
-    message_part = line[second_space + 1:]
-
+    # Делим строку максимум на 3 части: время, уровень, сообщение
+    parts = line.split(maxsplit=2)
+    if len(parts) < 3:
+        raise ValueError("Неполная строка журнала")
+    
+    time_str, level, message = parts
+    
+    # Проверка формата времени через регулярное выражение (YYYY-MM-DDTHH:MM:SS)
+    time_pattern = r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$'
+    if not re.match(time_pattern, time_str):
+        raise ValueError("Неверный формат времени")
+    
+    # Допустимые уровни логирования
     valid_levels = {"DEBUG", "INFO", "WARNING", "ERROR"}
-    if level_part not in valid_levels:
-        raise ValueError(f"Unknown level: {level_part}")
+    if level not in valid_levels:
+        raise ValueError(f"Неизвестный уровень лога: {level}")
+        
+    return {
+        "time": time_str,
+        "level": level,
+        "message": message
+    }
 
-    return {"time": time_part, "level": level_part, "message": message_part}
 
-
-def count_levels(lines):
+def count_levels(lines) -> dict:
     """
-    Считает количество строк по уровням.
-    lines — итерируемый объект (список строк или открытый файл).
-    Негодные строки считаются под ключом BROKEN.
+    Подсчитывает количество строк каждого уровня.
+    Испорченные строки или ошибки парсинга учитываются под ключом BROKEN.
     Пустые строки пропускаются.
     """
-    counts = {"DEBUG": 0, "INFO": 0, "WARNING": 0, "ERROR": 0, "BROKEN": 0}
-
+    counts = {}
     for line in lines:
-        line = line.rstrip("\n")
-        if not line.strip():
-            continue  # пропускаем пустые
-
+        if not line or not line.strip():
+            continue
         try:
             event = parse_event(line)
-            level = event["level"]
-            counts[level] = counts.get(level, 0) + 1
+            lvl = event["level"]
+            counts[lvl] = counts.get(lvl, 0) + 1
         except ValueError:
-            counts["BROKEN"] += 1
-
+            counts["BROKEN"] = counts.get("BROKEN", 0) + 1
+            
     return counts
 
 
-def top_errors(lines, n: int):
+def top_errors(lines, n: int) -> list:
     """
-    n самых частых сообщений уровня ERROR.
-    При равенстве частоты — сортировка по алфавиту сообщения.
-    Возвращает список пар [сообщение, количество].
+    Возвращает n самых частых сообщений уровня ERROR в виде пар [сообщение, сколько раз].
+    При равенстве частоты — сортировка по алфавиту сообщений.
     """
-    from collections import Counter
-
-    error_messages = []
-
+    error_counts = {}
     for line in lines:
-        line = line.rstrip("\n")
-        if not line.strip():
+        if not line or not line.strip():
             continue
-
         try:
             event = parse_event(line)
             if event["level"] == "ERROR":
-                error_messages.append(event["message"])
+                msg = event["message"]
+                error_counts[msg] = error_counts.get(msg, 0) + 1
         except ValueError:
-            # битые строки не считаются как ошибки
             continue
-
-    counter = Counter(error_messages)
-
-    # сортируем: сначала по частоте (убывание), потом по сообщению (возрастание)
-    sorted_items = sorted(counter.items(), key=lambda x: (-x[1], x[0]))
-
-    result = [[msg, cnt] for msg, cnt in sorted_items[:n]]
+            
+    # Сортируем: сначала по убыванию частоты (-count), затем по алфавиту сообщения (msg)
+    sorted_errors = sorted(error_counts.items(), key=lambda item: (-item[1], item[0]))
+    
+    # Превращаем кортежи в списки и берём первые n элементов
+    result = [[msg, cnt] for msg, cnt in sorted_errors[:n]]
     return result
 
 
-def format_report(counts: dict, errors: list):
+def format_report(counts: dict, errors: list) -> str:
     """
-    Форматирует отчёт как в задании.
-    Уровни выводятся по алфавиту, в конце — перевод строки.
+    Формирует текст отчёта по готовым подсчётам.
+    Уровни выводятся по алфавиту, ошибки через длинное тире «—», в конце перевод строки.
     """
-    lines_out = ["Отчёт по журналу"]
-
-    # Уровни по алфавиту (исключая BROKEN, чтобы он был первым по условию примера)
-    # Но в примере BROKEN стоит первым, поэтому сделаем так: BROKEN отдельно, остальные — по алфавиту
-    levels_order = ["BROKEN", "DEBUG", "ERROR", "INFO", "WARNING"]
-
-    for lvl in levels_order:
-        if lvl in counts:
-            lines_out.append(f"{lvl}: {counts[lvl]}")
-
-    if errors:
-        lines_out.append("Частые ошибки:")
-        for msg, cnt in errors:
-            lines_out.append(f"- {msg} — {cnt}")
-
-    return "\n".join(lines_out) + "\n"
+    report_lines = ["Отчёт по журналу", ""]
+    
+    # Уровни сортируем по алфавиту
+    for level in sorted(counts.keys()):
+        report_lines.append(f"{level}: {counts[level]}")
+        
+    report_lines.append("")
+    report_lines.append("Частые ошибки:")
+    
+    for msg, count in errors:
+        report_lines.append(f"- {msg} — {count}")
+        
+    return "\n".join(report_lines) + "\n"
