@@ -1,24 +1,25 @@
-def count_by_extension(paths: list[str]) -> dict[str, int]:
-    counts: dict[str, int] = {}
+def count_by_extension(paths):
+    counts = {}
+    
     for path in paths:
-        name = path.rsplit("/", 1)[-1]                 # имя файла без каталогов
-        ext = name.rsplit(".", 1)[1].lower() if "." in name else ""
+        # Находим последнюю точку в имени файла (не в пути!)
+        # Сначала отделяем имя файла от пути
+        filename = path.split('/')[-1]
+        
+        # Логика для скрытых файлов: если файл начинается с точки и точек больше нет, расширения нет
+        if filename.startswith('.') and filename.count('.') == 1:
+            ext = ""
+        else:
+            # Ищем последнюю точку
+            last_dot_index = filename.rfind('.')
+            
+            # Если точки нет или она в самом начале (но мы уже обработали случай с одной точкой в начале)
+            if last_dot_index == -1 or last_dot_index == 0:
+                ext = ""
+            else:
+                # Берём всё после последней точки и приводим к нижнему регистру
+                ext = filename[last_dot_index + 1:].lower()
+        
         counts[ext] = counts.get(ext, 0) + 1
+        
     return counts
-
-
-def deepest_path(paths: list[str]) -> str:
-    if not paths:
-        return ""
-    return min(paths, key=lambda p: (-p.count("/"), p))
-
-
-def human_size(n_bytes: int) -> str:
-    units = ["Б", "КБ", "МБ", "ГБ", "ТБ"]
-    if n_bytes < 1024:
-        return f"{n_bytes} {units[0]}"
-    for k in range(1, len(units)):
-        if n_bytes < 1024 ** (k + 1):
-            return f"{n_bytes / 1024 ** k:.1f} {units[k]}"
-    return f"{n_bytes / 1024 ** 4:.1f} {units[4]}"     # всё, что больше ТБ
-
