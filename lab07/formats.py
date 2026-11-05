@@ -2,7 +2,6 @@ import json
 
 
 def _convert(value: str):
-    """Приводит строку к числу, булеву значению или оставляет строкой."""
     value = value.strip()
     low = value.lower()
     if low in ("true", "yes"):
@@ -38,12 +37,12 @@ def parse_settings(lines: list[str]) -> dict:
     for line in lines:
         if "#" in line:
             line = line.split("#", 1)[0]
-        line = line.rstrip()
-        if not line.strip():
+        line = line.strip()
+        if not line:
             continue
         if line.startswith("- "):
             if current_list is not None:
-                current_list.append(_convert(line[2:]))
+                current_list.append(_convert(line[2:].strip()))
             continue
         current_list = None
         if ":" not in line:
@@ -71,3 +70,4 @@ def merge_by_key(rows: list[dict], extra: dict, key: str = "id") -> list[dict]:
 
 def records_to_json(records: list[dict]) -> str:
     return json.dumps(records, ensure_ascii=False, indent=2, sort_keys=True)
+
